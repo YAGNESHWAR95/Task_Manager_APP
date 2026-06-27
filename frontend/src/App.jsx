@@ -3,7 +3,7 @@ import axios from 'axios';
 import TaskItem from './components/TaskItem';
 import Auth from './components/Auth';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://task-manager-app-lgfl.onrender.com';
 const API_URL = `${API_BASE}/api/tasks`;
 
 function App() {
