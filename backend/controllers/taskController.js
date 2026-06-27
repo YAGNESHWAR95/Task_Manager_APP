@@ -2,7 +2,8 @@ import {Task} from '../models/task.js'; // Note the .js extension!
 
 export const getAllTasks = async (req, res) => {
     try {
-        let query = {};
+        // Enforce user scoping
+        let query = { user: req.user.id };
 
         // 1. Completion status filter (uses compound index: completed + priority + createdAt)
         if (req.query.completed !== undefined && req.query.completed !== '') {
@@ -30,8 +31,6 @@ export const getAllTasks = async (req, res) => {
             } else if (req.query.sortBy === 'newest') {
                 sortOption = { createdAt: -1 };
             } else if (req.query.sortBy === 'priority') {
-                // Map priorities High -> Medium -> Low for sorting. 
-                // In MongoDB we can sort alphabetically (High, Low, Medium), but for clean priority sort:
                 sortOption = { priority: 1, createdAt: -1 };
             }
         }
@@ -46,7 +45,8 @@ export const getAllTasks = async (req, res) => {
 
 export const createTask = async (req, res) => {
     try {
-        const newTask = await Task.create(req.body);
+        // Bind the task to the authenticated user's ID
+        const newTask = await Task.create({ ...req.body, user: req.user.id });
         res.status(201).json(newTask);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -55,7 +55,11 @@ export const createTask = async (req, res) => {
 
 export const deleteTask = async (req, res) => {
     try {
-        await Task.findByIdAndDelete(req.params.id);
+        // Locate and delete only if it belongs to the authenticated user
+        const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found or unauthorized' });
+        }
         res.status(200).json({ message: 'Task deleted successfully' });
     } catch (error) {
         res.status(404).json({ message: 'Task not found' });
@@ -65,7 +69,15 @@ export const deleteTask = async (req, res) => {
 export const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedTask = await Task.findByIdAndUpdate(id, req.body, { new: true });
+        // Locate and update only if it belongs to the authenticated user
+        const updatedTask = await Task.findOneAndUpdate(
+            { _id: id, user: req.user.id },
+            req.body,
+            { new: true }
+        );
+        if (!updatedTask) {
+            return res.status(404).json({ message: 'Task not found or unauthorized' });
+        }
         res.status(200).json(updatedTask);
     } catch (error) {
         res.status(400).json({ message: error.message });

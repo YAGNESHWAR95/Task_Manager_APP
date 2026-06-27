@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import TaskItem from './components/TaskItem';
+import Auth from './components/Auth';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const API_URL = `${API_BASE}/api/tasks`;
 
 function App() {
+  // Session / Authentication state
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [tasks, setTasks] = useState([]);
   const [allTasks, setAllTasks] = useState([]); // Used for global dashboard statistics
   
@@ -25,8 +37,34 @@ function App() {
   const [filterPriority, setFilterPriority] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
 
+  // Sync token to Axios default headers
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [token]);
+
+  // Handle Token expiration / unauthorized responses
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 401) {
+          handleLogout();
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   // Fetch only the tasks matching current search, filters, and sort options
   const fetchTasks = async () => {
+    if (!token) return;
     try {
       const params = {};
       if (searchQuery.trim()) params.search = searchQuery;
@@ -43,6 +81,7 @@ function App() {
 
   // Fetch all tasks to compute accurate stats (avoids environment drift/inconsistencies)
   const fetchStats = async () => {
+    if (!token) return;
     try {
       const res = await axios.get(API_URL);
       setAllTasks(res.data);
@@ -53,17 +92,37 @@ function App() {
 
   // Initial load
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (token) {
+      fetchStats();
+      fetchTasks();
+    }
+  }, [token]);
 
   // Debounced search & query sync
   useEffect(() => {
+    if (!token) return;
     const delayDebounceFn = setTimeout(() => {
       fetchTasks();
     }, 250);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, filterCompleted, filterPriority, sortBy]);
+  }, [searchQuery, filterCompleted, filterPriority, sortBy, token]);
+
+  const handleAuthSuccess = (newToken, newUser) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
+  const handleLogout = () => {
+    setToken('');
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setTasks([]);
+    setAllTasks([]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,19 +159,47 @@ function App() {
   const pendingTasks = totalTasks - completedTasks;
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  // Render Login/Signup view if not logged in
+  if (!token) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-16">
       <div className="max-w-4xl mx-auto py-12 px-4">
         {/* Premium Header */}
-        <header className="mb-10 text-center">
-          <span className="px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full uppercase tracking-wider">
+        <header className="mb-10 text-center relative flex flex-col items-center">
+          {/* User Profile Badge & Logout Button */}
+          <div className="w-full flex items-center justify-between sm:justify-end gap-3 mb-6 sm:absolute sm:right-0 sm:top-0 sm:mb-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center font-bold text-xs text-indigo-600 uppercase">
+                {user?.username?.charAt(0) || 'U'}
+              </div>
+              <div className="flex flex-col items-start text-left">
+                <span className="text-xs font-bold text-slate-800">@{user?.username}</span>
+                <span className="text-[10px] text-slate-450 font-medium">{user?.email}</span>
+              </div>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-650 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200/50"
+              title="Sign Out"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign Out
+            </button>
+          </div>
+
+          <span className="px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full uppercase tracking-wider mt-2 sm:mt-0">
             Workspace Manager
           </span>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mt-3 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
             TaskFlow Pro
           </h1>
-          <p className="text-slate-500 mt-2 text-md">
-            Streamlined collaborative dashboard with Mongo-optimized indexing and Docker.
+          <p className="text-slate-500 mt-2 text-md max-w-lg">
+            Secured personal task dashboard with Mongo-optimized indexing and Docker.
           </p>
         </header>
 
@@ -167,7 +254,7 @@ function App() {
                   <option>Medium</option>
                   <option>High</option>
                 </select>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer">
                   Add
                 </button>
               </div>
@@ -178,7 +265,7 @@ function App() {
               <button 
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors outline-none focus:underline"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors outline-none focus:underline cursor-pointer"
               >
                 <span>{showAdvanced ? 'Hide' : 'Show'} Advanced Options (Description, Due Date, Tags)</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -26,6 +26,11 @@ const TaskSchema = new Schema({
     tags: {
         type: [String],
         default: []
+    },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 }, { 
     timestamps: true // Automatically adds createdAt and updatedAt
@@ -40,6 +45,9 @@ TaskSchema.index({ completed: 1, priority: 1, createdAt: -1 });
 
 // 3. Single field index for priority-only filters
 TaskSchema.index({ priority: 1 });
+
+// 4. Single field index for user scoping
+TaskSchema.index({ user: 1 });
 
 // Exporting the model as a named export
 export const Task = model('Task', TaskSchema);

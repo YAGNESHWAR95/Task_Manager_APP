@@ -12,6 +12,8 @@ services:
         value: 5000
       - key: MONGO_URI
         sync: false # User will provide their MongoDB connection string (e.g. MongoDB Atlas) in Render's dashboard
+      - key: JWT_SECRET
+        generateValue: true
 
   # Frontend Static Site
   - type: web

@@ -3,6 +3,10 @@ const router = express.Router();
 
 // Destructured import - MUST include .js extension
 import { getAllTasks, createTask, deleteTask, updateTask } from '../controllers/taskController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
+// Protect all task routes
+router.use(protect);
 
 router.get('/', getAllTasks);
 router.post('/', createTask);
