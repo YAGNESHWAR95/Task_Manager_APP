@@ -9,11 +9,20 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        process.env.FRONTEND_URL || 'https://task-manager-app-mu-steel.vercel.app'
-    ],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Allow localhost and any vercel.app subdomain/domain
+        if (
+            origin.startsWith('http://localhost') || 
+            origin.endsWith('.vercel.app')
+        ) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
