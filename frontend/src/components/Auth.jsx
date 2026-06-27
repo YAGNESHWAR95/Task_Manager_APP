@@ -27,8 +27,13 @@ function Auth({ onAuthSuccess }) {
     const { username, email, password, confirmPassword } = formData;
 
     // Validate inputs
-    if (!email || !password) {
-      setError('Please fill in all required fields.');
+    if (!email) {
+      setError('Email address is required.');
+      setLoading(false);
+      return;
+    }
+    if (!password) {
+      setError('Password is required.');
       setLoading(false);
       return;
     }
@@ -45,7 +50,7 @@ function Auth({ onAuthSuccess }) {
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        setError('Passwords do not match. Please re-enter them.');
         setLoading(false);
         return;
       }
@@ -126,7 +131,7 @@ function Auth({ onAuthSuccess }) {
                 autoComplete="username"
                 required
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-205 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
-                placeholder="yagnesh95"
+                placeholder="Enter your username (e.g. yagnesh95)"
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -142,7 +147,7 @@ function Auth({ onAuthSuccess }) {
               autoComplete="email"
               required
               className="w-full px-4 py-3 bg-slate-50 border border-slate-205 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
-              placeholder="you@example.com"
+              placeholder="Enter your email address (e.g. you@example.com)"
               value={formData.email}
               onChange={handleChange}
             />
@@ -157,7 +162,7 @@ function Auth({ onAuthSuccess }) {
               autoComplete="current-password"
               required
               className="w-full px-4 py-3 bg-slate-50 border border-slate-205 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
-              placeholder="••••••••"
+              placeholder="Enter your password (min 6 characters)"
               value={formData.password}
               onChange={handleChange}
             />
@@ -173,7 +178,7 @@ function Auth({ onAuthSuccess }) {
                 autoComplete="new-password"
                 required
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-205 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
-                placeholder="••••••••"
+                placeholder="Re-enter your password to match"
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
