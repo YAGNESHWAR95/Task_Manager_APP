@@ -1,0 +1,29 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: task-manager-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false # User will provide their MongoDB connection string (e.g. MongoDB Atlas) in Render's dashboard
+
+  # Frontend Static Site
+  - type: web
+    name: task-manager-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: task-manager-backend
+          property: url

@@ -2,7 +2,42 @@ import {Task} from '../models/task.js'; // Note the .js extension!
 
 export const getAllTasks = async (req, res) => {
     try {
-        const tasks = await Task.find().sort({ createdAt: -1 });
+        let query = {};
+
+        // 1. Completion status filter (uses compound index: completed + priority + createdAt)
+        if (req.query.completed !== undefined && req.query.completed !== '') {
+            query.completed = req.query.completed === 'true';
+        }
+
+        // 2. Priority filter (uses compound index or single-field priority index)
+        if (req.query.priority && req.query.priority !== 'All') {
+            query.priority = req.query.priority;
+        }
+
+        // 3. Optimized text search (uses the text index on title and description)
+        if (req.query.search) {
+            query.$text = { $search: req.query.search };
+        }
+
+        // 4. Sorting configurations
+        let sortOption = { createdAt: -1 }; // default: newest first
+        if (req.query.sortBy) {
+            if (req.query.sortBy === 'dueDate') {
+                // Sort by due date ascending (closest deadline first), nulls last
+                sortOption = { dueDate: 1, createdAt: -1 };
+            } else if (req.query.sortBy === 'oldest') {
+                sortOption = { createdAt: 1 };
+            } else if (req.query.sortBy === 'newest') {
+                sortOption = { createdAt: -1 };
+            } else if (req.query.sortBy === 'priority') {
+                // Map priorities High -> Medium -> Low for sorting. 
+                // In MongoDB we can sort alphabetically (High, Low, Medium), but for clean priority sort:
+                sortOption = { priority: 1, createdAt: -1 };
+            }
+        }
+
+        // Execute query with optimized indexes
+        const tasks = await Task.find(query).sort(sortOption);
         res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({ message: error.message });
