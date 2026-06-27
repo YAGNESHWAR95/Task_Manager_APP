@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://task-manager-app-lgfl.onrender.com';
 const API_URL = `${API_BASE}/api/tasks`;
 
 const TaskItem = ({ task, fetchTasks, fetchStats }) => {
