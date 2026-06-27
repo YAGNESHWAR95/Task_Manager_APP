@@ -2,6 +2,10 @@
 
 TaskFlow Pro is a secure, monolithic task management application designed for high performance, ease of development, and seamless deployment. It features robust user authentication, data isolation, database optimization, and full containerization.
 
+## Live Deployments
+- **Live Frontend (Vercel)**: [https://task-manager-app-mu-steel.vercel.app/](https://task-manager-app-mu-steel.vercel.app/)
+- **Live Backend API (Render)**: [https://task-manager-app-lgfl.onrender.com](https://task-manager-app-lgfl.onrender.com)
+
 ## Key Features & Highlights
 
 *   **Optimized Database Indexing**: Targeted a scalable monolithic CRUD structure, refining index patterns in MongoDB to optimize queries and achieve a **25% reduction in API response latency**.
