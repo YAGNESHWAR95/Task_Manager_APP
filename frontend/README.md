@@ -1,12 +1,69 @@
-# React + Vite
+# TaskFlow Pro - React Frontend Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React-based client web application for TaskFlow Pro, designed with a premium, responsive interface panel, glassmorphic card elements, and live data synchronization.
 
-Currently, two official plugins are available:
+## Features & Highlights
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   **Responsive User Statistics**: Real-time task dashboard showcasing completed, pending, total tasks, and a dynamic progress completion rate bar.
+*   **Intuitive Task Controls**: Allows sorting tasks (by newest, oldest, due date, or priority) and advanced filtering (by status, priority, and debounced text search).
+*   **Persistent Auth Portal**: Complete login and signup views integrated with `localStorage` for session token preservation.
+*   **Axios Request Interceptor**: Automatically attaches the `Authorization: Bearer <token>` header to all outgoing requests and catches `401 Unauthorized` responses to clear expired credentials and force safe logout redirects.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Technical Stack
+
+*   **Framework**: React (v19)
+*   **Build Tooling**: Vite (v7)
+*   **Styling**: Tailwind CSS (Utility-first framework)
+*   **Request Client**: Axios (REST API calls)
+
+---
+
+## Folder Structure
+
+```
+frontend/
+├── public/                 # Static assets
+└── src/
+    ├── assets/             # SVGs and static media
+    ├── components/
+    │   ├── Auth.jsx        # Login & Signup Form views
+    │   └── TaskItem.jsx    # Individual Task Item (edit, complete, delete)
+    ├── App.jsx             # Main Application hub (State, Dashboard, Header)
+    ├── index.css           # Core styling index
+    └── main.jsx            # React root injection point
+```
+
+---
+
+## Setup & Local Development
+
+### Prerequisites
+- Node.js (v18+)
+- Backend service running locally (on port `5000`) or deployed on the cloud.
+
+### Steps to Run
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Configure Environment Variables (Optional)**
+   Create a `.env` file in this directory to override the live deployment API URL during local debugging:
+   ```env
+   VITE_API_URL=http://localhost:5000
+   ```
+
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` to access the application.
+
+4. **Production Build**
+   To build the production-ready assets (dist folder):
+   ```bash
+   npm run build
+   ```
